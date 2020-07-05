@@ -1,0 +1,57 @@
+function getUsernameInfoOverTime(){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ApiKey = sheet.getRange("B1").getValue();
+  var ApiSecret = sheet.getRange("B2").getValue();
+  var Username = sheet.getRange("B3").getValue();
+  
+  //Generating a bearer token
+  //Source: https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens
+  var ApiUrlAuthorize = "https://api.twitter.com/oauth2/token";
+  var token = Utilities.base64EncodeWebSafe(ApiKey + ":" + ApiSecret);
+  var options = {
+     headers : {
+       Authorization: "Basic " + token,
+       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+     },
+     method: "post",
+     payload: "grant_type=client_credentials"
+  };
+  var responseApiUrlAuthorize = UrlFetchApp.fetch(ApiUrlAuthorize, options);
+  var resultToken = JSON.parse(responseApiUrlAuthorize);
+  
+  //Get user info
+  var ApiUrlUsers = 'https://api.twitter.com/1.1/users/show.json?screen_name=' + Username;
+  var parsedToken = resultToken.access_token;
+  var options = {
+   headers : {
+     Authorization: 'Bearer ' + parsedToken
+   },
+   "method" : "get"
+  };
+  var responseApiUrlUsers = UrlFetchApp.fetch(ApiUrlUsers, options);
+  var result = JSON.parse(responseApiUrlUsers);
+  
+  //Define variables
+  var followersCount = result.followers_count;
+  var friendsCount = result.friends_count;
+  var favouritesCount = result.favourites_count;
+  var statusesCount = result.statuses_count;
+  
+  var lastrow = sheet.getLastRow() + 1;
+  //Insert new data
+  sheet.getRange("A" + lastrow).setValue(Utilities.formatDate(new Date(), "GMT+1", "dd/MM/yyyy"));
+  sheet.getRange("B" + lastrow).setValue(followersCount);
+  sheet.getRange("C" + lastrow).setValue(friendsCount);
+  sheet.getRange("D" + lastrow).setValue(favouritesCount);
+  sheet.getRange("E" + lastrow).setValue(statusesCount); 
+}
+
+  
+  
+  
+  
+  
+  
+  
+  
