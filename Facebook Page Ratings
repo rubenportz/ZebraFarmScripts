@@ -1,0 +1,82 @@
+// Step 1
+// Create a Facebook App: https://developers.facebook.com/apps
+
+// Step 2
+// Generate an Acess Token: https://developers.facebook.com/tools/explorer
+
+function insertFacebookPageRatings() {
+ 
+ // define active sheet to paste results in
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+ 
+ // get input values from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+  
+ // make fetch to Facebook Marketing API to get userId
+ var apiUrl = 'https://graph.facebook.com/v7.0/me?fields=id,name&access_token=' + accessToken; 
+ var responseApi = UrlFetchApp.fetch(apiUrl);
+ var result = JSON.parse(responseApi.getContentText());
+  
+ // make fetch to Facebook Marketing API to get all pages
+ var apiUrl = 'https://graph.facebook.com/v7.0/' + result.id + '/accounts?access_token=' + accessToken; 
+ var responseApi = UrlFetchApp.fetch(apiUrl);
+ var result = JSON.parse(responseApi.getContentText());
+  
+ // create empty Arrays to fill with the JSON response 
+ var pageName = [];
+ var id = [];
+  
+ // find length of result array to set as the end of the loop 
+ var arrayLength = result.data.length;
+  
+ // push results into the arrays for Interests
+ for (var i=0; i<arrayLength; i++){
+   pageName.push([result.data[i].name]); 
+   id.push([result.data[i].id]); 
+ };
+  
+ // remove prior data from the sheet in range
+ var sheetRange = sheet.getRange("A6:D").clear();
+ sheet.getRange(6, 1, arrayLength, 1).setValues(pageName);
+ sheet.getRange(6, 2, arrayLength, 1).setValues(id);
+}
+
+
+function insertFacebookRatings() {
+ 
+ // define active sheet to paste results in
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+ 
+ // get input values from the sheet 
+ var accessToken = sheet.getRange("B3").getValue(); 
+ var pageID = sheet.getRange("B4").getValue(); 
+  
+ // make fetch to Facebook Marketing API to get all pages
+ var apiUrl = 'https://graph.facebook.com/v7.0/' + pageID + '/ratings?access_token=' + accessToken; 
+ var responseApi = UrlFetchApp.fetch(apiUrl);
+ var result = JSON.parse(responseApi.getContentText());
+  
+ // create empty Arrays to fill with the JSON response 
+ var created_time = [];
+ var recommendation_type = [];
+ var rating = [];
+ var reviewer = [];
+  
+ // find length of result array to set as the end of the loop 
+ var arrayLength = result.data.length;
+  
+ // push results into the arrays for Interests
+ for (var i=0; i<arrayLength; i++){
+   created_time.push([result.data[i].created_time]); 
+   recommendation_type.push([result.data[i].recommendation_type]); 
+   rating.push([result.data[i].rating]); 
+   reviewer.push([result.data[i].reviewer.name]); 
+ };
+  
+ // remove prior data from the sheet in range
+ var sheetRange = sheet.getRange("C6:G").clear();
+ sheet.getRange(6, 4, arrayLength, 1).setValues(created_time);
+ sheet.getRange(6, 5, arrayLength, 1).setValues(recommendation_type);
+ sheet.getRange(6, 6, arrayLength, 1).setValues(rating);
+ sheet.getRange(6, 7, arrayLength, 1).setValues(reviewer);
+}
