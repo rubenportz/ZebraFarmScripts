@@ -1,0 +1,110 @@
+function importInstaAccountIDs() {
+ 
+ //define in what sheet to import
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+ // Permissons required: pages_show_list, instagram_basic
+ // get access token from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+  
+ // get accounts from API
+ var apiUrlGetAccounts = 'https://graph.facebook.com/v7.0/me/accounts?access_token=' + accessToken; 
+ var responseApiGetAccounts = UrlFetchApp.fetch(apiUrlGetAccounts);
+ var result = JSON.parse(responseApiGetAccounts.getContentText());
+  
+ // define arrays to import into sheet
+ var name = [];
+ var id = [];
+ var arrayLength = result.data.length;
+  
+ // push results into the arrays to get accounts 
+ for (var i=0; i<arrayLength; i++){
+   name.push([result.data[i].name]); 
+   id.push([result.data[i].id]); 
+ };
+  
+ // remove prior data from the sheet in range A5:D 
+ var sheetRange = sheet.getRange("A8:B").clear();
+  
+ // import account IDs
+ sheet.getRange(8, 1, arrayLength, 1).setValues(name);
+ sheet.getRange(8, 2, arrayLength, 1).setValues(id)
+  
+}
+
+
+
+function getMediaStatsFromBussinessAccount() {
+ 
+  //define in what sheet to import
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // Permissons required: pages_show_list, instagram_basic
+  // get input values from the sheet 
+  var accessToken = sheet.getRange(2,2).getValue(); 
+  
+  // get business account profile
+  var PageID = sheet.getRange(5,1).getValue();
+  var apiUrl = 'https://graph.facebook.com/v7.0/'+ PageID +'?fields=instagram_business_account&access_token=' + accessToken; 
+  var responseApiGetBusinessAccount = UrlFetchApp.fetch(apiUrl);
+  var resultBusinessAccount = JSON.parse(responseApiGetBusinessAccount.getContentText());
+  
+  // define BusinessID
+  var BusinessID = resultBusinessAccount.instagram_business_account.id;
+  
+  // get all media with a limit of 1000 post
+  var apiUrl = 'https://graph.facebook.com/v7.0/'+ BusinessID +'/media?limit=1000&access_token=' + accessToken; 
+  var responseApiGetMedia = UrlFetchApp.fetch(apiUrl);
+  var mediaResult = JSON.parse(responseApiGetMedia.getContentText());
+  
+  // define empty array to push media to
+  var media = [];
+  var arrayLength = mediaResult.data.length;
+  
+  // push results into the array 
+  for (var i=0; i<arrayLength; i++){
+    media.push([mediaResult.data[i].id]); 
+  };
+      
+ // define empty array to insert media details
+    var commentsCount = 0;
+    var like_count = 0;
+    
+    //loop through all posts and get details  
+    for (var i=0; i<media.length; i++){
+      
+      //define post
+      var MediaID = media[i];   
+      
+      //get details for that post
+      var apiUrl = 'https://graph.facebook.com/v7.0/'+ MediaID +'?fields=comments_count,like_count&access_token=' + accessToken; 
+      var responseApiComments = UrlFetchApp.fetch(apiUrl);
+      var result = JSON.parse(responseApiComments.getContentText());
+      
+      //push post details to the array
+      commentsCount = commentsCount + result.comments_count;
+      like_count = like_count + result.like_count; 
+    }
+  
+  // get all instagram business account details
+  var apiUrl = 'https://graph.facebook.com/v7.0/'+ BusinessID +'?fields=media_count,follows_count,followers_count,username&access_token=' + accessToken; 
+  var responseApiGetMedia = UrlFetchApp.fetch(apiUrl);
+  var BusinessIDResult = JSON.parse(responseApiGetMedia.getContentText());
+  
+  // define empty array to push media to
+  var media_count = BusinessIDResult.media_count;
+  var follows_count = BusinessIDResult.follows_count;
+  var followers_count = BusinessIDResult.followers_count;
+  var engagement = (commentsCount + like_count) / followers_count;
+  var dateToday = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+  
+  //append to last row in range
+  sheet.getRange(2, 5,1,1).setValue(commentsCount);
+  sheet.getRange(3, 5,1,1).setValue(like_count);
+  sheet.getRange(4, 5,1,1).setValue(media_count);
+  sheet.getRange(5, 5,1,1).setValue(follows_count);
+  sheet.getRange(6, 5,1,1).setValue(followers_count);
+  sheet.getRange(7, 5,1,1).setValue(engagement);
+  
+};
+
