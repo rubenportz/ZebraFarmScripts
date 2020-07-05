@@ -1,0 +1,66 @@
+// Step 1
+// Create a Facebook App: https://developers.facebook.com/apps
+
+// Step 2
+// Generate an Acess Token: https://developers.facebook.com/tools/explorer
+
+function insertAdinterestFacebook() {
+ 
+ // define active sheet to paste results in
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+ 
+ // get input values from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+ var query = sheet.getRange(4,2).getValue(); 
+ var locale = sheet.getRange(6,2).getValue(); 
+ var limit = sheet.getRange(8,2).getValue(); 
+  
+ // make fetch to Facebook Marketing API for interests
+ var apiUrl = 'https://graph.facebook.com/v7.0/search?type=adinterest&q=['+ query +']&locale='+ locale +'S&limit='+ limit +'&access_token=' + accessToken; 
+ var responseApi = UrlFetchApp.fetch(apiUrl);
+  
+ // make fetch to Facebook Marketing API for suggestions
+ var apiUrl = 'https://graph.facebook.com/v7.0/search?type=adinterestsuggestion&interest_list=[%22'+ query +'%22]&locale='+ locale +'S&limit='+ limit +'&access_token=' + accessToken; 
+ var responseApiSuggestion = UrlFetchApp.fetch(apiUrl); 
+ 
+ // convert response from API to JSON
+ var result = JSON.parse(responseApi.getContentText());
+ var resultSuggestion = JSON.parse(responseApiSuggestion.getContentText());
+  
+ // create empty Arrays to fill with the JSON response 
+ var name = [];
+ var audience_size = [];
+ var path = [];
+ var topic = [];
+ var suggestion = [];
+ var suggestionAudience_Size = [];
+  
+ // find length of result array to set as the end of the loop 
+ var arrayLength = result.data.length;
+ var arrayLengthSuggestion = resultSuggestion.data.length;
+  
+ // push results into the arrays for Interests
+ for (var i=0; i<arrayLength; i++){
+   name.push([result.data[i].name]); 
+   audience_size.push([result.data[i].audience_size]); 
+   topic.push([result.data[i].topic]); 
+   path.push([result.data[i].path.join(" -> ")]); 
+ };
+  
+ // push results into the arrays for Suggestions
+ for (var i=0; i<arrayLengthSuggestion; i++){
+   suggestion.push([resultSuggestion.data[i].name]); 
+   suggestionAudience_Size.push([resultSuggestion.data[i].audience_size]); 
+ };
+  
+  // remove prior data from the sheet in range A13:D & F:G 
+ var sheetRange = sheet.getRange("A13:D").clear();
+ var sheetRangeSuggestion = sheet.getRange("F13:G").clear();
+ sheet.getRange(13, 1, arrayLength, 1).setValues(name);
+ sheet.getRange(13, 2, arrayLength, 1).setValues(audience_size);
+ sheet.getRange(13, 3, arrayLength, 1).setValues(topic); 
+ sheet.getRange(13, 4, arrayLength, 1).setValues(path);
+ sheet.getRange(13, 6, arrayLengthSuggestion, 1).setValues(suggestion); 
+ sheet.getRange(13, 7, arrayLengthSuggestion, 1).setValues(suggestionAudience_Size);
+}
+
