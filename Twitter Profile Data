@@ -1,0 +1,66 @@
+function getUsernameInfo(){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ApiKey = sheet.getRange("B1").getValue();
+  var ApiSecret = sheet.getRange("B2").getValue();
+  var Username = sheet.getRange("B3").getValue();
+  
+  //Generating a bearer token
+  //Source: https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens
+  var ApiUrlAuthorize = "https://api.twitter.com/oauth2/token";
+  var token = Utilities.base64EncodeWebSafe(ApiKey + ":" + ApiSecret);
+  var options = {
+     headers : {
+       Authorization: "Basic " + token,
+       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+     },
+     method: "post",
+     payload: "grant_type=client_credentials"
+  };
+  var responseApiUrlAuthorize = UrlFetchApp.fetch(ApiUrlAuthorize, options);
+  var resultToken = JSON.parse(responseApiUrlAuthorize);
+  
+  //Get user info
+  var ApiUrlUsers = 'https://api.twitter.com/1.1/users/show.json?screen_name=' + Username;
+  var parsedToken = resultToken.access_token;
+  var options = {
+   headers : {
+     Authorization: 'Bearer ' + parsedToken
+   },
+   "method" : "get"
+  };
+  var responseApiUrlUsers = UrlFetchApp.fetch(ApiUrlUsers, options);
+  var result = JSON.parse(responseApiUrlUsers);
+  
+  //Define variables
+  var profileImage = '=IMAGE("' + result.profile_image_url + '")';
+  var screenName = result.screen_name;
+  var userName = result.name;
+  var description = result.description;
+  var followersCount = result.followers_count;
+  var friendsCount = result.friends_count;
+  var favouritesCount = result.favourites_count;
+  var statusesCount = result.statuses_count;
+  var location = result.location;
+  var dateCreated = result.created_at;
+  var verified = result.verified;
+  var protected = result.protected;
+  var url = result.url;       
+  
+  //Insert new data
+  sheet.getRange("B5").setValue(profileImage);
+  sheet.getRange("B6").setValue(screenName);
+  sheet.getRange("B7").setValue(userName);
+  sheet.getRange("B8").setValue(description);
+  sheet.getRange("B9").setValue(followersCount);
+  sheet.getRange("B10").setValue(friendsCount);
+  sheet.getRange("B11").setValue(favouritesCount);
+  sheet.getRange("B12").setValue(statusesCount); 
+  sheet.getRange("B13").setValue(location); 
+  sheet.getRange("B14").setValue(dateCreated); 
+  sheet.getRange("B15").setValue(verified); 
+  sheet.getRange("B16").setValue(protected);  
+  sheet.getRange("B17").setValue(url);    
+  
+}
+
