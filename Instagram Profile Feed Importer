@@ -1,0 +1,118 @@
+function importInstaFeed() {
+ 
+ //define in what sheet to import
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+ // Permissons required: pages_show_list, instagram_basic
+ // get access token from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+  
+ // get accounts from API
+ var apiUrlGetAccounts = 'https://graph.facebook.com/v7.0/me/accounts?access_token=' + accessToken; 
+ var responseApiGetAccounts = UrlFetchApp.fetch(apiUrlGetAccounts);
+ var result = JSON.parse(responseApiGetAccounts.getContentText());
+  
+ // define arrays to import into sheet
+ var name = [];
+ var id = [];
+ var arrayLength = result.data.length;
+  
+ // push results into the arrays to get accounts 
+ for (var i=0; i<arrayLength; i++){
+   name.push([result.data[i].name]); 
+   id.push([result.data[i].id]); 
+ };
+  
+ // remove prior data from the sheet in range A5:D 
+ var sheetRange = sheet.getRange("A5:D").clear();
+  
+ // import account IDs
+ sheet.getRange(5, 1, arrayLength, 1).setValues(name);
+ sheet.getRange(5, 2, arrayLength, 1).setValues(id)
+  
+}
+
+
+
+function getMediaStatsFromBussinessAccount() {
+ 
+  //define in what sheet to import
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // Permissons required: pages_show_list, instagram_basic
+  // get input values from the sheet 
+  var accessToken = sheet.getRange(2,2).getValue(); 
+  
+  // get business account profile
+  var PageID = sheet.getRange(5,4).getValue();
+  var apiUrl = 'https://graph.facebook.com/v7.0/'+ PageID +'?fields=instagram_business_account&access_token=' + accessToken; 
+  var responseApiGetBusinessAccount = UrlFetchApp.fetch(apiUrl);
+  var resultBusinessAccount = JSON.parse(responseApiGetBusinessAccount.getContentText());
+  
+  // define BusinessID
+  var BusinessID = resultBusinessAccount.instagram_business_account.id;
+  
+  // get all media with a limit of 1000 post
+  var apiUrl = 'https://graph.facebook.com/v7.0/'+ BusinessID +'/media?limit=1000&access_token=' + accessToken; 
+  var responseApiGetMedia = UrlFetchApp.fetch(apiUrl);
+  var mediaResult = JSON.parse(responseApiGetMedia.getContentText());
+  
+  // define empty array to push media to
+  var media = [];
+  var arrayLength = mediaResult.data.length;
+  
+  // push results into the array 
+  for (var i=0; i<arrayLength; i++){
+    media.push([mediaResult.data[i].id]); 
+  };
+      
+ // define empty array to insert media details
+    var caption = [];
+    var commentsCount = [];
+    var like_count = [];
+    var media_url = [];
+    var media_type = [];
+    var is_comment_enabled = [];
+    var permalink = [];
+    var timestamp = [];
+    var username = [];
+    
+    //loop through all posts and get details  
+    for (var i=0; i<media.length; i++){
+      
+      //define post
+      var MediaID = media[i];   
+      
+      //get details for that post
+      var apiUrl = 'https://graph.facebook.com/v7.0/'+ MediaID +'?fields=comments,caption,comments_count,like_count,media_url,media_type,id,ig_id,is_comment_enabled,owner,permalink,shortcode,thumbnail_url,timestamp,username&access_token=' + accessToken; 
+      var responseApiComments = UrlFetchApp.fetch(apiUrl);
+      var result = JSON.parse(responseApiComments.getContentText());
+      
+      //push post details to the array
+      caption.push([result.caption]); 
+      commentsCount.push([result.comments_count]); 
+      like_count.push([result.like_count]); 
+      media_url.push([result.media_url]); 
+      media_type.push([result.media_type]); 
+      is_comment_enabled.push([result.is_comment_enabled]); 
+      permalink.push([result.permalink]); 
+      timestamp.push([result.timestamp]); 
+      username.push([result.username]); 
+    }
+      
+  // remove prior data from the sheet in range A13:D & F:G 
+  var sheetRange = sheet.getRange("F5:N").clear();
+  
+  // import the posts with details into the sheet
+  sheet.getRange(5, 6, caption.length, 1).setValues(caption)
+  sheet.getRange(5, 7, commentsCount.length, 1).setValues(commentsCount)
+  sheet.getRange(5, 8, like_count.length, 1).setValues(like_count)
+  sheet.getRange(5, 9, timestamp.length, 1).setValues(timestamp)
+  sheet.getRange(5, 10, media_url.length, 1).setValues(media_url)
+  sheet.getRange(5, 11, media_type.length, 1).setValues(media_type)
+  sheet.getRange(5, 12, is_comment_enabled.length, 1).setValues(is_comment_enabled)
+  sheet.getRange(5, 13, permalink.length, 1).setValues(permalink)
+  sheet.getRange(5, 14, username.length, 1).setValues(username)
+  
+};
+
