@@ -1,0 +1,81 @@
+function importFacebookGroupsFeed() {
+ 
+ //define in what sheet to import
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+ // Permissons required: pages_show_list, instagram_basic
+ // get access token from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+  
+ // get your profile id from API
+ var apiUrlGetAccounts = 'https://graph.facebook.com/v7.0/me?fields=id,name&access_token=' + accessToken; 
+ var responseApiGetAccounts = UrlFetchApp.fetch(apiUrlGetAccounts);
+ var result = JSON.parse(responseApiGetAccounts.getContentText());
+  
+ // define arrays to import into sheet
+ var name = result.name;
+ var id = result.id;
+  
+ // get groups from API
+ var apiUrlGetAccounts = 'https://graph.facebook.com/v7.0/' + id + '/groups?fields=name, id&access_token=' + accessToken; 
+ var responseApiGetAccounts = UrlFetchApp.fetch(apiUrlGetAccounts);
+ var result = JSON.parse(responseApiGetAccounts.getContentText());
+  
+ // define arrays to import into sheet
+ var groupNames = [];
+ var groupID = [];
+ 
+  // push results into the arrays to get accounts 
+ for (var i=0; i<result.data.length; i++){
+   groupNames.push([result.data[i].name]); 
+   groupID.push([result.data[i].id]); 
+ };
+  
+ // remove prior data from the sheet in range A8:B 
+ var sheetRange = sheet.getRange("A8:B").clear();
+  
+ // import account IDs
+ sheet.getRange(8, 1, groupNames.length, 1).setValues(groupNames);
+ sheet.getRange(8, 2, groupID.length, 1).setValues(groupID);
+}
+  
+
+function importFacebookGroupFeed() {
+ 
+ //define in what sheet to import
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+ // Permissons required: pages_show_list, instagram_basic
+ // get access token from the sheet 
+ var accessToken = sheet.getRange(2,2).getValue(); 
+  
+ //select group id in sheet
+ var groupIDSelected = sheet.getRange(5,1).getValue(); 
+  
+ //loop through  groups ids to get their feed
+  var apiUrlGetAccounts = 'https://graph.facebook.com/v7.0/' + groupIDSelected + '/feed?limit=100&access_token=' + accessToken; 
+  var responseApiGetAccounts = UrlFetchApp.fetch(apiUrlGetAccounts);
+  var result = JSON.parse(responseApiGetAccounts.getContentText());
+    
+  //add feed count to array
+  var feed = result.data.length; 
+  
+  // define arrays to import into sheet
+  var messages = [];
+  var dates = [];
+  
+  // push results into the arrays to get accounts 
+  for (var i=0; i<feed; i++){
+    messages.push([result.data[i].message]); 
+    dates.push([result.data[i].updated_time]); 
+  };
+   
+  // remove prior data from the sheet in range A5:D 
+  var sheetRange = sheet.getRange("D5:E").clear();
+  
+ // import account IDs
+ sheet.getRange(3, 5, 1, 1).setValue(feed);
+ sheet.getRange(5, 4, messages.length, 1).setValues(messages);
+ sheet.getRange(5, 5, dates.length, 1).setValues(dates);
+  
+}
