@@ -1,0 +1,49 @@
+function PostOnSlackChannel(){
+  
+  //Webhook URL, get it here --->https://my.slack.com/services/new/incoming-webhook
+  var url = "<insert URL here>";
+  
+  //define in what sheet to import values from
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var importDate = Utilities.formatDate(new Date(), "GMT+1", "dd/MM/yyyy");
+  var data2 = sheet.getRange("A2").getValue();
+  var data3 = sheet.getRange("A3").getValue();
+  var data4 = sheet.getRange("A4").getValue(); 
+  
+  //information to be send to Slack
+  var payload = {
+    //CHANNEL
+    //ncoming webhooks have a default channel, but it can be overridden in your JSON payload. 
+    //A public channel can be specified with "channel": "#other-channel", and a Direct Message with "channel": "@username".
+     "channel" : "#random",  
+    
+    //USERNAME
+    //You can customize the name and icon of your Incoming Webhook
+    //Customise the displayed name by for instance sending "username": "new-bot-name"  
+     "username" : "Stats Bot",
+    
+    //ICON
+    //You can also override the bot icon either with "icon_url": "https://slack.com/img/icons/app-57.png" or "icon_emoji": ":ghost:"
+    //"icon_url" : "http://image"
+    "icon_emoji": ":rocket:",
+    
+    //TEXT
+    //To create a link in your text, enclose the URL in <> angle brackets. 
+    //For example: payload="text": "" will post a clickable link to https://slack.com. 
+    //To display hyperlinked text instead of the actual URL, use the pipe character, as shown in this example:
+    "text" : importDate + "\nMetric 1: " + data2 + "\nMetric 2: " + data3 + "\nMetric 3: " + data4 
+    
+    //To format your text --> https://api.slack.com/reference/surfaces/formatting#visual-styles
+  };
+  
+  //tell the API to post
+  var options =  {
+    "method" : "post",
+    "contentType" : "application/json",
+    "payload" : JSON.stringify(payload)
+  };
+  
+  //make the API post request
+  return UrlFetchApp.fetch(url, options)
+}
+
