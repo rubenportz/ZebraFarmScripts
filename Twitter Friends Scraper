@@ -1,0 +1,95 @@
+function getTwitterFriends(){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ApiKey = sheet.getRange("B1").getValue();
+  var ApiSecret = sheet.getRange("B2").getValue();
+  var Username = sheet.getRange("B3").getValue();
+  
+  //Generating a bearer token
+  //Source: https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens
+  var ApiUrlAuthorize = "https://api.twitter.com/oauth2/token";
+  var token = Utilities.base64EncodeWebSafe(ApiKey + ":" + ApiSecret);
+  var options = {
+     headers : {
+       Authorization: "Basic " + token,
+       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+     },
+     method: "post",
+     payload: "grant_type=client_credentials"
+  };
+  var responseApiUrlAuthorize = UrlFetchApp.fetch(ApiUrlAuthorize, options);
+  var resultToken = JSON.parse(responseApiUrlAuthorize);
+  
+  
+  //Define empty arrays to push data in
+  var profileImage = [];
+  var screenName = []
+  var userName = [];
+  var description = [];
+  var followersCount = [];
+  var friendsCount = [];
+  var favouritesCount = [];
+  var statusesCount = [];
+  var location = [];
+  var dateCreated = [];
+  var verified = [];
+  var protected = [];
+  var url = []; 
+  var paging = -1
+  
+  
+  //Get followers
+  do{
+   var ApiUrlFollowers = 'https://api.twitter.com/1.1/friends/list.json?cursor=' + paging + '&screen_name='+ Username + '&include_user_entities&skip_status=true=false&count=200';
+   var parsedToken = resultToken.access_token;
+   var options = {
+    headers : {
+      Authorization: 'Bearer ' + parsedToken
+    },
+    "method" : "get"
+   };
+   var responseApiUrlUsers = UrlFetchApp.fetch(ApiUrlFollowers, options);
+   var response = responseApiUrlUsers.getContentText()
+   var result = JSON.parse(response);
+  
+   //loop through results
+   for(var i=0;i<result.users.length;i++){
+    
+   //Push data into arrays
+     profileImage.push(['=IMAGE("' + result.users[i].profile_image_url + '")']);
+     screenName.push([result.users[i].screen_name]);
+     userName.push([result.users[i].name]);
+     description.push([result.users[i].description]);
+     followersCount.push([result.users[i].followers_count]);
+     friendsCount.push([result.users[i].friends_count]);
+     favouritesCount.push([result.users[i].favourites_count]);
+     statusesCount.push([result.users[i].statuses_count]);
+     location.push([result.users[i].location]);
+     dateCreated.push([result.users[i].created_at]);
+     verified.push([result.users[i].verified]);
+     protected.push([result.users[i].protected]);
+     url.push([result.users[i].url]);       
+   }
+   paging = result.next_cursor;
+  }while(paging != 0)
+   
+  //Clear prior data
+  sheet.getRange("A6:M").clear();
+  
+  //Insert new data
+  sheet.getRange("A6:A"+(profileImage.length + 5)).setValues(profileImage);
+  sheet.getRange("B6:B"+(screenName.length + 5)).setValues(screenName);
+  sheet.getRange("C6:C"+(userName.length + 5)).setValues(userName);
+  sheet.getRange("D6:D"+(description.length + 5)).setValues(description);
+  sheet.getRange("E6:E"+(followersCount.length + 5)).setValues(followersCount);
+  sheet.getRange("F6:F"+(friendsCount.length + 5)).setValues(friendsCount);
+  sheet.getRange("G6:G"+(favouritesCount.length + 5)).setValues(favouritesCount);
+  sheet.getRange("H6:H"+(statusesCount.length + 5)).setValues(statusesCount); 
+  sheet.getRange("I6:I"+(location.length + 5)).setValues(location); 
+  sheet.getRange("J6:J"+(dateCreated.length + 5)).setValues(dateCreated); 
+  sheet.getRange("K6:K"+(verified.length + 5)).setValues(verified); 
+  sheet.getRange("L6:L"+(protected.length + 5)).setValues(protected);  
+  sheet.getRange("M6:M"+(url.length + 5)).setValues(url);    
+  
+}
+ 
