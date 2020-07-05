@@ -1,0 +1,27 @@
+function JSONconverter() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows();
+  var numCols = rows.getNumColumns();
+  var values = rows.getValues();
+  
+  var result = "";
+  var header = values[0];
+  
+  for (var i=1; i<numRows; i++) {
+    if(i>1) result += ", \n";
+    var row = values[i];
+    //start a row with "{"
+    result += "{";
+    for (var j=0; j<numCols; j++){
+      //add each column and separate with a comma
+      if (j>0) result += ", ";
+      result += "\""+header[j]+"\" : \""+row[j]+"\"";
+    }
+    result += "}";
+  }
+  Logger.log(result);
+  
+  DriveApp.createFile("NameOfTheFile.json", result, MimeType.PLAIN_TEXT);
+
+};
