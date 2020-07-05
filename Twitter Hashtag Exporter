@@ -1,0 +1,98 @@
+function getTwitterTweetsbyHashtag(){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ApiKey = sheet.getRange("B1").getValue();
+  var ApiSecret = sheet.getRange("B2").getValue();
+  var Hashtag = sheet.getRange("B3").getValue();
+  
+  //Generating a bearer token
+  //Source: https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens
+  var ApiUrlAuthorize = "https://api.twitter.com/oauth2/token";
+  var token = Utilities.base64EncodeWebSafe(ApiKey + ":" + ApiSecret);
+  var options = {
+     headers : {
+       Authorization: "Basic " + token,
+       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+     },
+     method: "post",
+     payload: "grant_type=client_credentials"
+  };
+  var responseApiUrlAuthorize = UrlFetchApp.fetch(ApiUrlAuthorize, options);
+  var resultToken = JSON.parse(responseApiUrlAuthorize);
+  
+  
+  //Define empty arrays to push data in
+  var text = [];
+  var created_at = [];
+  var retweet_count = [];
+  var favorite_count = [];
+  var followers_count = [];
+  var friends_count = [];
+  var favourites_count = [];
+  var name = [];
+  
+  //Source: https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline
+  //Get tweet ids
+   var ApiUrlTweetIds = "https://api.twitter.com/1.1/search/tweets.json?count=100&include_entities=false";
+    ApiUrlTweetIds += "&result_type=recent&q=" + stringEncoder(Hashtag);
+   var parsedToken = resultToken.access_token;
+   var options = {
+    headers : {
+      Authorization: 'Bearer ' + parsedToken
+    },
+    "method" : "get"
+   };
+   var responseApiUrlTweetIds = UrlFetchApp.fetch(ApiUrlTweetIds, options);
+   var response = responseApiUrlTweetIds.getContentText()
+   var result = JSON.parse(response);
+  Logger.log(result)
+   //loop through results
+   for(var i=0;i<result.statuses.length;i++){
+    
+   //Push data into arrays
+     text.push([result.statuses[i].text]); 
+     created_at.push([result.statuses[i].created_at]); 
+     retweet_count.push([result.statuses[i].retweet_count]); 
+     favorite_count.push([result.statuses[i].favorite_count]); 
+     followers_count.push([result.statuses[i].user.followers_count]); 
+     friends_count.push([result.statuses[i].user.friends_count]); 
+     favourites_count.push([result.statuses[i].user.favourites_count]); 
+     name.push([result.statuses[i].user.name]); 
+   }
+  
+  //Clear prior data
+  sheet.getRange("A6:M").clear();
+  
+  //Insert new data
+  sheet.getRange("A6:A"+(text.length + 5)).setValues(created_at); 
+  sheet.getRange("B6:B"+(text.length + 5)).setValues(name); 
+  sheet.getRange("C6:C"+(text.length + 5)).setValues(retweet_count); 
+  sheet.getRange("D6:D"+(text.length + 5)).setValues(favorite_count);
+  sheet.getRange("E6:E"+(text.length + 5)).setValues(text); 
+  sheet.getRange("F6:F"+(text.length + 5)).setValues(followers_count); 
+  sheet.getRange("G6:G"+(text.length + 5)).setValues(friends_count); 
+  sheet.getRange("H6:H"+(text.length + 5)).setValues(favourites_count);
+  
+  
+}
+
+function stringEncoder(input) {
+    var string = encodeURIComponent(input);
+    string = string.replace(/!/g, '%21');
+    string = string.replace(/#/g, '%23');
+    string = string.replace(/\*/g, '%2A');
+    string = string.replace(/\(/g, '%28');
+    string = string.replace(/\)/g, '%29');
+    string = string.replace(/'/g, '%27');
+    return string;
+}
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
