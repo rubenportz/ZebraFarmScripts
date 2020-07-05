@@ -1,0 +1,86 @@
+function getTwitterTweets(){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ApiKey = sheet.getRange("B1").getValue();
+  var ApiSecret = sheet.getRange("B2").getValue();
+  var Username = sheet.getRange("B3").getValue();
+  
+  //Generating a bearer token
+  //Source: https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens
+  var ApiUrlAuthorize = "https://api.twitter.com/oauth2/token";
+  var token = Utilities.base64EncodeWebSafe(ApiKey + ":" + ApiSecret);
+  var options = {
+     headers : {
+       Authorization: "Basic " + token,
+       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+     },
+     method: "post",
+     payload: "grant_type=client_credentials"
+  };
+  var responseApiUrlAuthorize = UrlFetchApp.fetch(ApiUrlAuthorize, options);
+  var resultToken = JSON.parse(responseApiUrlAuthorize);
+  
+  
+  //Define empty arrays to push data in
+  var text = [];
+  var retweet = [];
+  var favourite = [];
+  var retweetCount = 0;
+  var favouriteCount = 0;
+  var dateToday = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+  
+  //Source: https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline
+  //Get tweet ids
+   var ApiUrlTweetIds = 'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=' + Username;
+   var parsedToken = resultToken.access_token;
+   var options = {
+    headers : {
+      Authorization: 'Bearer ' + parsedToken
+    },
+    "method" : "get"
+   };
+   var responseApiUrlTweetIds = UrlFetchApp.fetch(ApiUrlTweetIds, options);
+   var response = responseApiUrlTweetIds.getContentText()
+   var result = JSON.parse(response);
+
+   //loop through results
+   for(var i=0;i<result.length;i++){
+    
+   //Push data into arrays
+     text.push([result[i].text]); 
+     retweet.push([result[i].retweet_count]); 
+     favourite.push([result[i].favorite_count]);  
+     
+     retweetCount = retweetCount + result[i].retweet_count;
+     favouriteCount = favouriteCount + result[i].favorite_count;
+   }
+  
+  //Clear prior data
+  //sheet.getRange("A6:M").clear();
+  
+  //Insert new data
+  sheet.getRange("A6:A"+(text.length + 5)).setValues(text); 
+  sheet.getRange("B6:B"+(retweet.length + 5)).setValues(retweet); 
+  sheet.getRange("C6:C"+(favourite.length + 5)).setValues(favourite); 
+  
+  //get number of values in row
+  var rowNum = sheet.getRange("E1:E").getValues();
+  rowNum = rowNum.filter(String).length;
+  //to start at the 3rd row
+  rowNum = rowNum + 5
+  
+  sheet.getRange(rowNum,5,1,1).setValue(dateToday);
+  sheet.getRange(rowNum,6,1,1).setValue(retweetCount);
+  sheet.getRange(rowNum,7,1,1).setValue(favouriteCount);
+  
+}
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
